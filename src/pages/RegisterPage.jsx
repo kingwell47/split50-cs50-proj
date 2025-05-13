@@ -46,6 +46,7 @@ const RegisterPage = () => {
           {loading ? "Registering…" : "Register"}
         </button>
       </form>
+      <div className="divider">OR</div>
       <GoogleButton onSuccess={() => navigate("/")} />
     </div>
   );

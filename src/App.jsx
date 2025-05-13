@@ -24,7 +24,6 @@ function App() {
 
   return (
     <Router>
-      <h1>Hello World</h1>
       <NavBar />
       {loading ? (
         <div className="h-screen flex items-center justify-center">
