@@ -18,8 +18,6 @@ const UserProfilePage = () => {
         const ref = doc(db, "users", user.uid);
         const snap = await getDoc(ref);
 
-        console.log(snap);
-
         if (snap.exists()) {
           setProfile(snap.data());
         } else {
