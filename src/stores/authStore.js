@@ -9,6 +9,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth } from "../firebase/config"; // your initialized Firebase app
+import { createUserProfile } from "../services/userService";
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -32,6 +33,7 @@ export const useAuthStore = create((set) => ({
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       // Set displayName on Auth Profile
       await updateProfile(cred.user, { displayName });
+      await createUserProfile(cred.user);
       const updatedUser = auth.currentUser;
       set({ user: updatedUser });
     } catch (err) {

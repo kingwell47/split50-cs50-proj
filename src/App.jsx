@@ -12,6 +12,7 @@ import GroupsPage from "./pages/GroupsPage";
 import RegisterPage from "./pages/RegisterPage";
 import NavBar from "./components/NavBar";
 import { useEffect } from "react";
+import UserProfilePage from "./pages/UserProfilePage";
 
 function App() {
   const { user, loading } = useAuthStore();
@@ -26,25 +27,26 @@ function App() {
     <Router>
       <NavBar />
       {loading ? (
-        <div className="h-screen flex items-center justify-center">
+        <div className='h-screen flex items-center justify-center'>
           Loading…
         </div>
       ) : (
         <Routes>
           {/* Public route */}
           <Route
-            path="/login"
-            element={!user ? <LoginPage /> : <Navigate to="/" replace />}
+            path='/login'
+            element={!user ? <LoginPage /> : <Navigate to='/' replace />}
           />
           <Route
-            path="/register"
-            element={!user ? <RegisterPage /> : <Navigate to="/" replace />}
+            path='/register'
+            element={!user ? <RegisterPage /> : <Navigate to='/' replace />}
           />
 
           {/* All routes inside here require auth */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/groups" element={<GroupsPage />} />
+            <Route path='/' element={<DashboardPage />} />
+            <Route path='/groups' element={<GroupsPage />} />
+            <Route path='/profile' element={<UserProfilePage />} />
             {/* add more protected routes here */}
           </Route>
         </Routes>
