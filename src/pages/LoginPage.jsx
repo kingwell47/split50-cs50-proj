@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import GoogleButton from "../components/GoogleButton";
 
@@ -22,36 +22,44 @@ const LoginPage = () => {
     <div>
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="email">Email</label>
+          <label htmlFor='email'>Email</label>
           <input
-            id="email"
-            type="email"
+            id='email'
+            type='email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="input"
+            className='input'
           />
         </div>
 
         <div>
-          <label htmlFor="password">Password</label>
+          <label htmlFor='password'>Password</label>
           <input
-            id="password"
-            type="password"
+            id='password'
+            type='password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="input"
+            className='input'
           />
         </div>
 
-        {error && <p className="text-error">{error}</p>}
+        {error && <p className='text-error'>{error}</p>}
 
-        <button type="submit" disabled={loading} className="btn btn-primary">
+        <button type='submit' disabled={loading} className='btn btn-primary'>
           {loading ? "Logging in…" : "Login"}
         </button>
       </form>
-      <div className="divider">OR</div>
+      <div className='text-center'>
+        <p className='text-base-content/60'>
+          Don&apos;t have an account?{" "}
+          <Link to='/register' className='link link-primary'>
+            Create account
+          </Link>
+        </p>
+      </div>
+      <div className='divider'>OR</div>
       <GoogleButton onSuccess={() => navigate("/")} />
     </div>
   );

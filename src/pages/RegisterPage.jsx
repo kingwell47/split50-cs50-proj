@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import GoogleButton from "../components/GoogleButton";
 
@@ -24,29 +24,37 @@ const RegisterPage = () => {
         <div>
           <label>Email</label>
           <input
-            type="email"
+            type='email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="input"
+            className='input'
           />
         </div>
         <div>
           <label>Password</label>
           <input
-            type="password"
+            type='password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="input"
+            className='input'
           />
         </div>
-        {error && <p className="text-red-500">{error}</p>}
-        <button type="submit" disabled={loading} className="btn btn-primary">
+        {error && <p className='text-red-500'>{error}</p>}
+        <button type='submit' disabled={loading} className='btn btn-primary'>
           {loading ? "Registering…" : "Register"}
         </button>
       </form>
-      <div className="divider">OR</div>
+      <div className='text-center'>
+        <p className='text-base-content/60'>
+          Already have an account?{" "}
+          <Link to='/login' className='link link-primary'>
+            Log In
+          </Link>
+        </p>
+      </div>
+      <div className='divider'>OR</div>
       <GoogleButton onSuccess={() => navigate("/")} />
     </div>
   );
