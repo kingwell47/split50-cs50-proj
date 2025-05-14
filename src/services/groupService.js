@@ -17,7 +17,7 @@ export async function fetchUserGroups(userId) {
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
-// 1a. Create a group + add creator as admin member
+// Create a group + add creator as admin member
 export async function createGroup({ name, description, createdBy }) {
   const groupRef = doc(collection(db, "groups"));
   const batch = writeBatch(db);
@@ -38,13 +38,13 @@ export async function createGroup({ name, description, createdBy }) {
   return groupRef.id;
 }
 
-// 1b. Fetch single group metadata
+// Fetch single group metadata
 export async function fetchGroupDetails(groupId) {
   const snap = await getDoc(doc(db, "groups", groupId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-// 1c. Fetch and enrich members list
+// Fetch and enrich members list
 export async function fetchGroupMembers(groupId) {
   const memberSnap = await getDocs(
     collection(db, "groups", groupId, "members")

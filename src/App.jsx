@@ -13,6 +13,8 @@ import RegisterPage from "./pages/RegisterPage";
 import NavBar from "./components/NavBar";
 import { useEffect } from "react";
 import UserProfilePage from "./pages/UserProfilePage";
+import CreateGroupPage from "./pages/CreateGroupPage";
+import GroupDetailPage from "./pages/GroupDetailPage";
 
 function App() {
   const { user, loading } = useAuthStore();
@@ -46,6 +48,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path='/' element={<DashboardPage />} />
             <Route path='/groups' element={<GroupsPage />} />
+            <Route path='/groups/create' element={<CreateGroupPage />} />
+            <Route path='/groups/:groupId' element={<GroupDetailPage />} />
             <Route path='/profile' element={<UserProfilePage />} />
             {/* add more protected routes here */}
           </Route>
