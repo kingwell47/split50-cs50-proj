@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
+  updateProfile,
 } from "firebase/auth";
 import { auth } from "../firebase/config"; // your initialized Firebase app
 
@@ -24,11 +25,15 @@ export const useAuthStore = create((set) => ({
   },
 
   // Register with email/password
-  register: async (email, password) => {
+  register: async (email, password, displayName) => {
     set({ loading: true, error: null });
     try {
+      // Create account
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      set({ user: cred.user });
+      // Set displayName on Auth Profile
+      await updateProfile(cred.user, { displayName });
+      const updatedUser = auth.currentUser;
+      set({ user: updatedUser });
     } catch (err) {
       set({ error: err.message });
     } finally {

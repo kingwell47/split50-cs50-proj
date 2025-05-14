@@ -9,18 +9,37 @@ const RegisterPage = () => {
   const error = useAuthStore((s) => s.error);
   const navigate = useNavigate();
 
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await register(email, password);
+    // Check display name
+    if (!displayName.trim()) {
+      return alert("Display name is required");
+    }
+
+    await register(email, password, displayName);
+
     if (!error) navigate("/"); // redirect on success
   };
+
   return (
     <div>
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor='displayName'>Display Name</label>
+          <input
+            id='displayName'
+            type='text'
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+            className='input'
+          />
+        </div>
         <div>
           <label>Email</label>
           <input
@@ -43,14 +62,14 @@ const RegisterPage = () => {
         </div>
         {error && <p className='text-red-500'>{error}</p>}
         <button type='submit' disabled={loading} className='btn btn-primary'>
-          {loading ? "Registering…" : "Register"}
+          {loading ? "Creating account…" : "Create account"}
         </button>
       </form>
       <div className='text-center'>
         <p className='text-base-content/60'>
           Already have an account?{" "}
           <Link to='/login' className='link link-primary'>
-            Log In
+            Create account
           </Link>
         </p>
       </div>
