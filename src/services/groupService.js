@@ -7,6 +7,9 @@ import {
   serverTimestamp,
   getDoc,
   getDocs,
+  setDoc,
+  updateDoc,
+  arrayUnion,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -61,4 +64,31 @@ export async function fetchGroupMembers(groupId) {
     })
   );
   return members;
+}
+
+/**
+ * Adds the current user as a member of the group and updates the parent group document.
+ * @param {string} groupId
+ * @param {string} userId
+ */
+export async function joinGroup(groupId, userId) {
+  // 1. Check group exists
+  const groupRef = doc(db, "groups", groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) {
+    throw new Error("Group not found");
+  }
+
+  // 2. Add user to members subcollection
+  const memberRef = doc(db, "groups", groupId, "members", userId);
+  await setDoc(memberRef, {
+    role: "member",
+    joinedAt: serverTimestamp(),
+    invitedBy: userId, // self-join
+  });
+
+  // 3. Add userId to group.members array
+  await updateDoc(groupRef, {
+    members: arrayUnion(userId),
+  });
 }

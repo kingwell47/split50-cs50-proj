@@ -61,6 +61,7 @@ export const useAuthStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      await createUserProfile(result.user);
       set({ user: result.user });
     } catch (err) {
       set({ error: err.message });

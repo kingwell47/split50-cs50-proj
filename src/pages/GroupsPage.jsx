@@ -24,24 +24,31 @@ const GroupsPage = () => {
   }, [user]);
 
   if (loading) return <div>Loading groups…</div>;
-  if (error) return <div className='text-error'>Error: {error}</div>;
+  if (error) return <div className="text-error">Error: {error}</div>;
 
   return (
-    <div className='p-4'>
-      <h2 className='text-2xl font-semibold mb-4'>Your Groups</h2>
+    <div className="p-4">
+      <h2 className="text-2xl font-semibold mb-4">Your Groups</h2>
+      <Link to="/groups/create" className="btn btn-sm btn-secondary">
+        Create Group
+      </Link>
+      <Link to="/groups/join" className="btn btn-sm btn-secondary">
+        Join Group
+      </Link>
 
       {groups.length === 0 ? (
         <p>You’re not in any groups yet.</p>
       ) : (
-        <ul className='space-y-2'>
+        <ul className="space-y-2">
           {groups.map((group) => (
             <li key={group.id}>
               <Link
                 to={`/groups/${group.id}`}
-                className='text-blue-600 hover:underline'>
+                className="text-blue-600 hover:underline"
+              >
                 {group.name}
               </Link>
-              <p className='text-sm text-gray-500'>{group.description}</p>
+              <p className="text-sm text-gray-500">{group.description}</p>
             </li>
           ))}
         </ul>

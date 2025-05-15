@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { fetchGroupDetails, fetchGroupMembers } from "../services/groupService";
 
 const GroupDetailPage = () => {
@@ -27,14 +27,17 @@ const GroupDetailPage = () => {
   }, [groupId]);
 
   if (loading) return <p>Loading group…</p>;
-  if (error) return <p className='text-error'>{error}</p>;
+  if (error) return <p className="text-error">{error}</p>;
 
   return (
-    <div className='p-4'>
-      <h2 className='text-2xl font-semibold'>{group.name}</h2>
-      <p className='mb-4 text-gray-600'>{group.description}</p>
+    <div className="p-4">
+      <Link to="/groups/" className="btn btn-sm btn-secondary">
+        Groups
+      </Link>
+      <h2 className="text-2xl font-semibold">{group.name}</h2>
+      <p className="mb-4 text-gray-600">{group.description}</p>
 
-      <h3 className='text-xl font-medium'>Members</h3>
+      <h3 className="text-xl font-medium">Members</h3>
       {members.length === 0 ? (
         <p>No members yet.</p>
       ) : (

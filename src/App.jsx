@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import UserProfilePage from "./pages/UserProfilePage";
 import CreateGroupPage from "./pages/CreateGroupPage";
 import GroupDetailPage from "./pages/GroupDetailPage";
+import JoinGroupPage from "./pages/JoinGroupPage";
 
 function App() {
   const { user, loading } = useAuthStore();
@@ -29,28 +30,29 @@ function App() {
     <Router>
       <NavBar />
       {loading ? (
-        <div className='h-screen flex items-center justify-center'>
+        <div className="h-screen flex items-center justify-center">
           Loading…
         </div>
       ) : (
         <Routes>
           {/* Public route */}
           <Route
-            path='/login'
-            element={!user ? <LoginPage /> : <Navigate to='/' replace />}
+            path="/login"
+            element={!user ? <LoginPage /> : <Navigate to="/" replace />}
           />
           <Route
-            path='/register'
-            element={!user ? <RegisterPage /> : <Navigate to='/' replace />}
+            path="/register"
+            element={!user ? <RegisterPage /> : <Navigate to="/" replace />}
           />
 
           {/* All routes inside here require auth */}
           <Route element={<ProtectedRoute />}>
-            <Route path='/' element={<DashboardPage />} />
-            <Route path='/groups' element={<GroupsPage />} />
-            <Route path='/groups/create' element={<CreateGroupPage />} />
-            <Route path='/groups/:groupId' element={<GroupDetailPage />} />
-            <Route path='/profile' element={<UserProfilePage />} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/groups" element={<GroupsPage />} />
+            <Route path="/groups/create" element={<CreateGroupPage />} />
+            <Route path="/groups/join" element={<JoinGroupPage />} />
+            <Route path="/groups/:groupId" element={<GroupDetailPage />} />
+            <Route path="/profile" element={<UserProfilePage />} />
             {/* add more protected routes here */}
           </Route>
         </Routes>
