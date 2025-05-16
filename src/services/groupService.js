@@ -141,3 +141,43 @@ export async function leaveGroup(groupId, userId) {
   const memberRef = doc(db, "groups", groupId, "members", userId);
   await deleteDoc(memberRef);
 }
+
+/**
+ * Delete a group and its subcollections (members & expenses).
+ * Only the creator may perform this; throws otherwise.
+ * @param {string} groupId
+ * @param {string} userId
+ */
+export async function deleteGroup(groupId, userId) {
+  // 1. Verify group and ownership
+  const groupRef = doc(db, "groups", groupId);
+  const snap = await getDoc(groupRef);
+
+  if (!snap.exists()) {
+    throw new Error("Group not found");
+  }
+  const { createdBy } = snap.data();
+
+  if (createdBy !== userId) {
+    throw new Error("Only the group owner can delete the group");
+  }
+
+  // 2. Batch-delete members & expenses
+  const batch = writeBatch(db);
+
+  const membersSnap = await getDocs(
+    collection(db, "groups", groupId, "members")
+  );
+  membersSnap.forEach((m) => batch.delete(m.ref));
+
+  const expensesSnap = await getDocs(
+    collection(db, "groups", groupId, "expenses")
+  );
+  expensesSnap.forEach((e) => batch.delete(e.ref));
+
+  // 3. Delete the group document
+  batch.delete(groupRef);
+
+  // 4. Commit
+  await batch.commit();
+}

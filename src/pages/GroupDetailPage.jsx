@@ -4,6 +4,7 @@ import {
   fetchGroupDetails,
   fetchGroupMembers,
   leaveGroup,
+  deleteGroup,
 } from "../services/groupService";
 import { useAuthStore } from "../stores/authStore";
 
@@ -44,6 +45,18 @@ const GroupDetailPage = () => {
     }
   };
 
+  const handleDelete = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await deleteGroup(groupId, user.uid);
+      navigate("/groups");
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
   if (loading) return <p>Loading group…</p>;
   if (error) return <p className='text-error'>{error}</p>;
 
@@ -74,6 +87,14 @@ const GroupDetailPage = () => {
       {isMember && !isCreator && (
         <button onClick={handleLeave} className='btn btn-error'>
           Leave Group
+        </button>
+      )}
+      {isCreator && (
+        <button
+          onClick={handleDelete}
+          disabled={loading}
+          className='btn btn-error'>
+          {loading ? "Deleting…" : "Delete Group"}
         </button>
       )}
     </div>
