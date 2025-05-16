@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { fetchGroupDetails, fetchGroupMembers } from "../services/groupService";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  fetchGroupDetails,
+  fetchGroupMembers,
+  leaveGroup,
+} from "../services/groupService";
+import { useAuthStore } from "../stores/authStore";
 
 const GroupDetailPage = () => {
   const { groupId } = useParams();
@@ -8,6 +13,9 @@ const GroupDetailPage = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -26,18 +34,31 @@ const GroupDetailPage = () => {
     })();
   }, [groupId]);
 
+  const handleLeave = async () => {
+    setError("");
+    try {
+      await leaveGroup(groupId, user.uid);
+      navigate("/groups");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   if (loading) return <p>Loading group…</p>;
-  if (error) return <p className="text-error">{error}</p>;
+  if (error) return <p className='text-error'>{error}</p>;
+
+  const isMember = members.some((m) => m.uid === user.uid);
+  const isCreator = group.createdBy === user.uid;
 
   return (
-    <div className="p-4">
-      <Link to="/groups/" className="btn btn-sm btn-secondary">
+    <div className='p-4'>
+      <Link to='/groups/' className='btn btn-sm btn-secondary'>
         Groups
       </Link>
-      <h2 className="text-2xl font-semibold">{group.name}</h2>
-      <p className="mb-4 text-gray-600">{group.description}</p>
+      <h2 className='text-2xl font-semibold'>{group.name}</h2>
+      <p className='mb-4 text-gray-600'>{group.description}</p>
 
-      <h3 className="text-xl font-medium">Members</h3>
+      <h3 className='text-xl font-medium'>Members</h3>
       {members.length === 0 ? (
         <p>No members yet.</p>
       ) : (
@@ -48,6 +69,12 @@ const GroupDetailPage = () => {
             </li>
           ))}
         </ul>
+      )}
+
+      {isMember && !isCreator && (
+        <button onClick={handleLeave} className='btn btn-error'>
+          Leave Group
+        </button>
       )}
     </div>
   );

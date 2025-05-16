@@ -1,6 +1,7 @@
 import {
   collection,
   collectionGroup,
+  deleteDoc,
   query,
   where,
   doc,
@@ -117,4 +118,26 @@ export async function joinGroup(groupId, userId) {
   await updateDoc(groupRef, {
     members: arrayUnion(userId),
   });
+}
+
+/**
+ * Remove the current user from a group’s members.
+ * @param {string} groupId
+ * @param {string} userId
+ */
+export async function leaveGroup(groupId, userId) {
+  // 1. Fetch the group to check creator
+  const groupRef = doc(db, "groups", groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) {
+    throw new Error("Group not found");
+  }
+  const { createdBy } = groupSnap.data();
+  // 2. Prevent the creator from leaving
+  if (createdBy === userId) {
+    throw new Error("Group creator cannot leave the group");
+  }
+  // 3. Proceed to delete the member doc
+  const memberRef = doc(db, "groups", groupId, "members", userId);
+  await deleteDoc(memberRef);
 }
