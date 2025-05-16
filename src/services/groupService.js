@@ -1,5 +1,6 @@
 import {
   collection,
+  collectionGroup,
   query,
   where,
   doc,
@@ -13,11 +14,34 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
-// Fetch groups the user has created (you can extend this to check membership)
+// Fetch groups the user has created
 export async function fetchUserGroups(userId) {
-  const q = query(collection(db, "groups"), where("createdBy", "==", userId));
-  const snap = await getDocs(q);
-  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  // 1. groups user created
+  const createdSnap = await getDocs(
+    query(collection(db, "groups"), where("createdBy", "==", userId))
+  );
+  const created = createdSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  // 2. groups user joined
+  const memberSnap = await getDocs(
+    query(collectionGroup(db, "members"), where("userId", "==", userId))
+  );
+  const memberGroupIds = memberSnap.docs.map((m) => m.ref.parent.parent.id);
+
+  // 3. fetch those group docs
+  const joined = (
+    await Promise.all(
+      memberGroupIds.map(async (gid) => {
+        const g = await getDoc(doc(db, "groups", gid));
+        return g.exists() ? { id: g.id, ...g.data() } : null;
+      })
+    )
+  ).filter(Boolean);
+
+  // 4. merge & dedupe
+  const map = {};
+  [...created, ...joined].forEach((g) => (map[g.id] = g));
+  return Object.values(map);
 }
 
 // Create a group + add creator as admin member
@@ -35,6 +59,7 @@ export async function createGroup({ name, description, createdBy }) {
     role: "admin",
     joinedAt: serverTimestamp(),
     invitedBy: createdBy,
+    userId: createdBy,
   });
 
   await batch.commit();
@@ -85,6 +110,7 @@ export async function joinGroup(groupId, userId) {
     role: "member",
     joinedAt: serverTimestamp(),
     invitedBy: userId, // self-join
+    userId,
   });
 
   // 3. Add userId to group.members array
