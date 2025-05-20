@@ -7,6 +7,10 @@ import {
   deleteGroup,
 } from "../services/groupService";
 import { useAuthStore } from "../stores/authStore";
+import AddExpenseForm from "../components/AddExpenseForm";
+import BalanceSummary from "../components/BalanceSummary";
+import ExpenseList from "../components/ExpenseList";
+import { useExpenseStore } from "../stores/expenseStore";
 
 const GroupDetailPage = () => {
   const { groupId } = useParams();
@@ -14,6 +18,8 @@ const GroupDetailPage = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const { fetchExpenses } = useExpenseStore();
 
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -27,13 +33,16 @@ const GroupDetailPage = () => {
 
         const mems = await fetchGroupMembers(groupId);
         setMembers(mems);
+        if (groupId) {
+          fetchExpenses({ groupId });
+        }
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     })();
-  }, [groupId]);
+  }, [groupId, fetchExpenses]);
 
   const handleLeave = async () => {
     setError("");
@@ -58,46 +67,58 @@ const GroupDetailPage = () => {
   };
 
   if (loading) return <p>Loading group…</p>;
-  if (error) return <p className='text-error'>{error}</p>;
+  if (error) return <p className="text-error">{error}</p>;
 
   const isMember = members.some((m) => m.uid === user.uid);
   const isCreator = group.createdBy === user.uid;
 
   return (
-    <div className='p-4'>
-      <Link to='/groups/' className='btn btn-sm btn-secondary'>
-        Groups
-      </Link>
-      <h2 className='text-2xl font-semibold'>{group.name}</h2>
-      <p className='mb-4 text-gray-600'>{group.description}</p>
+    <>
+      <div className="p-4">
+        <Link to="/groups/" className="btn btn-sm btn-secondary">
+          Groups
+        </Link>
+        <h2 className="text-2xl font-semibold">{group.name}</h2>
+        <p className="mb-4 text-gray-600">{group.description}</p>
 
-      <h3 className='text-xl font-medium'>Members</h3>
-      {members.length === 0 ? (
-        <p>No members yet.</p>
-      ) : (
-        <ul>
-          {members.map((m) => (
-            <li key={m.uid}>
-              {m.displayName || m.email} <em>({m.role})</em>
-            </li>
-          ))}
-        </ul>
-      )}
+        <h3 className="text-xl font-medium">Members</h3>
+        {members.length === 0 ? (
+          <p>No members yet.</p>
+        ) : (
+          <ul>
+            {members.map((m) => (
+              <li key={m.uid}>
+                {m.displayName || m.email} <em>({m.role})</em>
+              </li>
+            ))}
+          </ul>
+        )}
 
-      {isMember && !isCreator && (
-        <button onClick={handleLeave} className='btn btn-error'>
-          Leave Group
-        </button>
-      )}
-      {isCreator && (
-        <button
-          onClick={handleDelete}
-          disabled={loading}
-          className='btn btn-error'>
-          {loading ? "Deleting…" : "Delete Group"}
-        </button>
-      )}
-    </div>
+        {isMember && !isCreator && (
+          <button onClick={handleLeave} className="btn btn-error">
+            Leave Group
+          </button>
+        )}
+        {isCreator && (
+          <button
+            onClick={handleDelete}
+            disabled={loading}
+            className="btn btn-error"
+          >
+            {loading ? "Deleting…" : "Delete Group"}
+          </button>
+        )}
+      </div>
+      <div>
+        <ExpenseList />
+        <AddExpenseForm
+          groupId={groupId}
+          currentUserId={user.uid}
+          members={members}
+        />
+        <BalanceSummary members={members} />
+      </div>
+    </>
   );
 };
 
