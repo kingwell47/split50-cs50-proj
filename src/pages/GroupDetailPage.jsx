@@ -110,7 +110,7 @@ const GroupDetailPage = () => {
         )}
       </div>
       <div>
-        <ExpenseList />
+        <ExpenseList members={members} />
         <AddExpenseForm
           groupId={groupId}
           currentUserId={user.uid}
