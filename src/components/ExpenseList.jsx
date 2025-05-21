@@ -1,6 +1,6 @@
 import { useExpenseStore } from "../stores/expenseStore";
 
-const ExpenseList = ({ members }) => {
+const ExpenseList = ({ members, currentUserId }) => {
   const { expenses, removeExpense } = useExpenseStore();
 
   const getUserName = (uid) => {
@@ -19,11 +19,21 @@ const ExpenseList = ({ members }) => {
           </p>
           {/* 🔽 Split breakdown */}
           <ul>
-            {expense.split.map((entry, idx) => (
-              <li key={entry.userId || idx}>
-                {getUserName(entry.userId)}: {entry.amount.toFixed(2)}
-              </li>
-            ))}
+            {expense.split.map((entry, idx) => {
+              const isCurrentUser = entry.userId === currentUserId;
+              const name = isCurrentUser ? "You" : getUserName(entry.userId);
+
+              return (
+                <li key={entry.userId || idx}>
+                  <span
+                    className={`${isCurrentUser ? "font-bold" : "font-normal"}`}
+                  >
+                    {name}
+                  </span>
+                  : <span>{entry.amount.toFixed(2)}</span>
+                </li>
+              );
+            })}
           </ul>
           <button
             className="btn btn-error"
