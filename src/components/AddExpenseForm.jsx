@@ -10,9 +10,12 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
   // Placeholder for custom splits
   const [customSplits, setCustomSplits] = useState({});
 
+  const [selectedUids, setSelectedUids] = useState(() =>
+    members.filter((m) => m.uid === currentUserId).map((m) => m.uid)
+  );
+
   const { createExpense } = useExpenseStore();
 
-  const userIds = members.map((m) => m.uid);
   const totalAmount = Number(amount);
 
   const handleSubmit = async (e) => {
@@ -20,7 +23,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
 
     const { split, splitUserIds } = generateExpenseSplit(
       splitType,
-      userIds,
+      selectedUids,
       totalAmount,
       customSplits
     );
@@ -46,7 +49,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
     try {
       const { split } = generateExpenseSplit(
         splitType,
-        userIds,
+        selectedUids,
         totalAmount,
         customSplits
       );
@@ -55,11 +58,17 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
       console.error(err);
       return [];
     }
-  }, [amount, splitType, customSplits, totalAmount, userIds]);
+  }, [amount, splitType, customSplits, selectedUids, totalAmount]);
 
   const getName = (uid) => {
     const m = members.find((m) => m.uid === uid);
     return m?.displayName || "Unknown";
+  };
+
+  const toggleUserSelection = (uid) => {
+    setSelectedUids((prev) =>
+      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
+    );
   };
 
   return (
@@ -78,21 +87,31 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
         className="input"
       />
 
-      {/* 🔜 Placeholder for future split logic */}
-      <select
-        value={splitType}
-        onChange={(e) => setSplitType(e.target.value)}
-        disabled
-      >
-        <option value="equal">Split equally (default)</option>
-        <option value="unequal">Split unequally (coming soon)</option>
-      </select>
+      <p>
+        <strong>Split With:</strong>
+      </p>
+      <ul>
+        {members.map((m) => (
+          <li key={m.uid}>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedUids.includes(m.uid)}
+                onChange={() => toggleUserSelection(m.uid)}
+              />
+              {m.displayName}
+            </label>
+          </li>
+        ))}
+      </ul>
 
       {/* 🔍 Real-time split preview */}
       {splitPreview.length > 0 && (
         <div>
           <p>
-            <strong>Split Preview:</strong>
+            <p>
+              <strong>Split between {splitPreview.length} member(s):</strong>
+            </p>
           </p>
           <ul>
             {splitPreview.map((entry) => (
@@ -103,6 +122,20 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
           </ul>
         </div>
       )}
+      <button
+        type="button"
+        className="btn btn-primary"
+        onClick={() => {
+          const allUids = members.map((m) => m.uid);
+          setSelectedUids((prev) =>
+            prev.length === members.length ? [] : allUids
+          );
+        }}
+      >
+        {selectedUids.length === members.length
+          ? "Clear All"
+          : "Split with All"}
+      </button>
 
       <button className="btn btn-primary" type="submit">
         Add Expense
