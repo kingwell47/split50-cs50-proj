@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useExpenseStore } from "../stores/expenseStore";
 import { generateExpenseSplit } from "../services/expenseService";
 
@@ -6,13 +6,14 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
 
-  const [splitType, setSplitType] = useState("equal"); // future-proof
-  // Placeholder for custom splits
+  const [splitType, setSplitType] = useState("equal");
   const [customSplits, setCustomSplits] = useState({});
 
   const [selectedUids, setSelectedUids] = useState(() =>
     members.filter((m) => m.uid === currentUserId).map((m) => m.uid)
   );
+
+  const [splitError, setSplitError] = useState(null);
 
   const { createExpense } = useExpenseStore();
 
@@ -20,6 +21,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (splitError) return;
 
     const { split, splitUserIds } = generateExpenseSplit(
       splitType,
@@ -40,6 +42,8 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
 
     setDescription("");
     setAmount("");
+    setCustomSplits({});
+    setSplitError(null);
   };
 
   // 🔁 Dynamically compute preview of split
@@ -71,6 +75,41 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
     );
   };
 
+  const handleCustomSplitChange = (uid, value) => {
+    setCustomSplits((prev) => ({
+      ...prev,
+      [uid]: value === "" ? "" : Number(value),
+    }));
+  };
+
+  useEffect(() => {
+    if (splitType !== "unequal") {
+      setSplitError(null);
+      return;
+    }
+
+    const values = selectedUids.map((uid) => Number(customSplits[uid]));
+    const sum = values.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
+
+    const anyEmpty = selectedUids.some(
+      (uid) => customSplits[uid] === "" || customSplits[uid] == null
+    );
+    const anyNegative = values.some((val) => val < 0);
+    const total = Number(amount);
+
+    if (anyEmpty) {
+      setSplitError("All selected users must have an amount.");
+    } else if (anyNegative) {
+      setSplitError("Split amounts cannot be negative.");
+    } else if (sum !== total) {
+      setSplitError(
+        `Total split (${sum}) must equal the expense amount (${total}).`
+      );
+    } else {
+      setSplitError(null);
+    }
+  }, [splitType, selectedUids, customSplits, amount]);
+
   return (
     <form onSubmit={handleSubmit}>
       <input
@@ -86,6 +125,35 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
         type="number"
         className="input"
       />
+      <select value={splitType} onChange={(e) => setSplitType(e.target.value)}>
+        <option value="equal">Split equally</option>
+        <option value="unequal">Split by amount</option>
+      </select>
+
+      {splitType === "unequal" && (
+        <ul>
+          {selectedUids.map((uid) => {
+            const member = members.find((m) => m.uid === uid);
+            return (
+              <li key={uid}>
+                <label>
+                  {member?.displayName || uid}
+                  <input
+                    type="number"
+                    min="0"
+                    value={customSplits[uid] ?? ""}
+                    onChange={(e) =>
+                      handleCustomSplitChange(uid, e.target.value)
+                    }
+                    placeholder="Enter amount"
+                    required
+                  />
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <p>
         <strong>Split With:</strong>
@@ -104,7 +172,6 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
           </li>
         ))}
       </ul>
-
       {/* 🔍 Real-time split preview */}
       {splitPreview.length > 0 && (
         <div>
@@ -137,7 +204,10 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
           : "Split with All"}
       </button>
 
-      <button className="btn btn-primary" type="submit">
+      {splitError && (
+        <p style={{ color: "red", fontWeight: "bold" }}>{splitError}</p>
+      )}
+      <button className="btn btn-primary" type="submit" disabled={splitError}>
         Add Expense
       </button>
     </form>
