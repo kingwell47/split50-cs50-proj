@@ -6,7 +6,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
 
-  const [splitType, setSplitType] = useState("equal");
+  const [splitMode, setSplitMode] = useState("equal"); // 'equal' | 'amount' | 'percent'
   const [customSplits, setCustomSplits] = useState({});
 
   const [selectedUids, setSelectedUids] = useState(() =>
@@ -24,7 +24,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
     if (splitError) return;
 
     const { split, splitUserIds } = generateExpenseSplit(
-      splitType,
+      splitMode,
       selectedUids,
       totalAmount,
       customSplits
@@ -44,6 +44,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
     setAmount("");
     setCustomSplits({});
     setSplitError(null);
+    setSplitMode("equal");
   };
 
   // 🔁 Dynamically compute preview of split
@@ -52,7 +53,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
 
     try {
       const { split } = generateExpenseSplit(
-        splitType,
+        splitMode,
         selectedUids,
         totalAmount,
         customSplits
@@ -62,7 +63,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
       console.error(err);
       return [];
     }
-  }, [amount, splitType, customSplits, selectedUids, totalAmount]);
+  }, [amount, splitMode, customSplits, selectedUids, totalAmount]);
 
   const getName = (uid) => {
     const m = members.find((m) => m.uid === uid);
@@ -83,32 +84,34 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
   };
 
   useEffect(() => {
-    if (splitType !== "unequal") {
+    if (splitMode === "equal") {
       setSplitError(null);
       return;
     }
 
     const values = selectedUids.map((uid) => Number(customSplits[uid]));
-    const sum = values.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0);
-
     const anyEmpty = selectedUids.some(
       (uid) => customSplits[uid] === "" || customSplits[uid] == null
     );
     const anyNegative = values.some((val) => val < 0);
-    const total = Number(amount);
 
-    if (anyEmpty) {
-      setSplitError("All selected users must have an amount.");
-    } else if (anyNegative) {
-      setSplitError("Split amounts cannot be negative.");
-    } else if (sum !== total) {
-      setSplitError(
-        `Total split (${sum}) must equal the expense amount (${total}).`
-      );
-    } else {
-      setSplitError(null);
+    if (anyEmpty) return setSplitError("All selected users must have a value.");
+    if (anyNegative) return setSplitError("Values cannot be negative.");
+
+    if (splitMode === "amount") {
+      const sum = values.reduce((a, b) => a + b, 0);
+      if (sum !== Number(amount))
+        return setSplitError("Amounts must total to full expense.");
     }
-  }, [splitType, selectedUids, customSplits, amount]);
+
+    if (splitMode === "percent") {
+      const percentSum = values.reduce((a, b) => a + b, 0);
+      if (percentSum !== 100)
+        return setSplitError("Percentages must total 100%.");
+    }
+
+    setSplitError(null);
+  }, [splitMode, selectedUids, customSplits, amount]);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -125,15 +128,18 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
         type="number"
         className="input"
       />
-      <select value={splitType} onChange={(e) => setSplitType(e.target.value)}>
+      <select value={splitMode} onChange={(e) => setSplitMode(e.target.value)}>
         <option value="equal">Split equally</option>
-        <option value="unequal">Split by amount</option>
+        <option value="amount">Split by amount</option>
+        <option value="percent">Split by percentage</option>
       </select>
 
-      {splitType === "unequal" && (
+      {splitMode !== "equal" && (
         <ul>
           {selectedUids.map((uid) => {
             const member = members.find((m) => m.uid === uid);
+            const label = splitMode === "amount" ? "₱" : "%";
+
             return (
               <li key={uid}>
                 <label>
@@ -145,7 +151,7 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
                     onChange={(e) =>
                       handleCustomSplitChange(uid, e.target.value)
                     }
-                    placeholder="Enter amount"
+                    placeholder={`Enter ${label}`}
                     required
                   />
                 </label>

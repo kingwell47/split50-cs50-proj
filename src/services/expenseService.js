@@ -84,7 +84,7 @@ export async function getFilteredExpenses({
  * @returns {{ split: Array, splitUserIds: Array }}
  */
 export function generateExpenseSplit(
-  splitType,
+  splitMode,
   userIds,
   totalAmount,
   customSplits = {}
@@ -95,23 +95,29 @@ export function generateExpenseSplit(
 
   let split = [];
 
-  if (splitType === "equal") {
+  if (splitMode === "equal") {
     const perUser = Math.round((totalAmount / userIds.length) * 100) / 100;
-    split = userIds.map((userId) => ({
-      userId,
-      amount: perUser,
+    split = userIds.map((uid) => ({ userId: uid, amount: perUser }));
+  } else if (splitMode === "amount") {
+    const sum = Object.values(customSplits).reduce((a, b) => a + Number(b), 0);
+    if (sum !== totalAmount)
+      throw new Error("Custom amounts must total to the full amount.");
+    split = Object.entries(customSplits).map(([uid, amt]) => ({
+      userId: uid,
+      amount: Number(amt),
     }));
-  } else if (splitType === "unequal") {
-    const sum = Object.values(customSplits).reduce((a, b) => a + b, 0);
-    if (sum !== totalAmount) {
-      throw new Error("Unequal splits must sum up to total amount");
-    }
-    split = Object.entries(customSplits).map(([userId, amount]) => ({
-      userId,
-      amount,
+  } else if (splitMode === "percent") {
+    const percentTotal = Object.values(customSplits).reduce(
+      (a, b) => a + Number(b),
+      0
+    );
+    if (percentTotal !== 100) throw new Error("Percentages must total 100%.");
+    split = Object.entries(customSplits).map(([uid, percent]) => ({
+      userId: uid,
+      amount: Math.round((Number(percent) / 100) * totalAmount * 100) / 100,
     }));
   } else {
-    throw new Error("Invalid split type");
+    throw new Error("Invalid split mode.");
   }
 
   const splitUserIds = split.map((s) => s.userId);
