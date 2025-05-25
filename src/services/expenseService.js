@@ -10,6 +10,7 @@ import {
   query,
   where,
   Timestamp,
+  orderBy,
 } from "firebase/firestore";
 
 const expensesCol = collection(db, "expenses");
@@ -52,7 +53,11 @@ export async function getFilteredExpenses({
   startDate,
   endDate,
 }) {
-  let q = query(collection(db, "expenses"), where("groupId", "==", groupId));
+  let q = query(
+    collection(db, "expenses"),
+    where("groupId", "==", groupId),
+    orderBy("createdAt", "desc")
+  );
 
   if (category) {
     q = query(q, where("category", "==", category));
@@ -70,6 +75,8 @@ export async function getFilteredExpenses({
   if (userId) {
     q = query(q, where("splitUserIds", "array-contains", userId));
   }
+
+  // q = query(q, orderBy("createdAt", "desc"));
 
   const snap = await getDocs(q);
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -122,4 +129,60 @@ export function generateExpenseSplit(
 
   const splitUserIds = split.map((s) => s.userId);
   return { split, splitUserIds };
+}
+
+export function calculateSettlements(balances) {
+  const creditors = [];
+  const debtors = [];
+
+  Object.entries(balances).forEach(([uid, amount]) => {
+    const rounded = Math.round(amount * 100) / 100;
+    if (rounded > 0) creditors.push({ uid, amount: rounded });
+    else if (rounded < 0) debtors.push({ uid, amount: -rounded }); // store as positive for ease
+  });
+
+  const settlements = [];
+
+  let i = 0;
+  let j = 0;
+
+  while (i < debtors.length && j < creditors.length) {
+    const debtor = debtors[i];
+    const creditor = creditors[j];
+    const minAmount = Math.min(debtor.amount, creditor.amount);
+
+    settlements.push({
+      from: debtor.uid,
+      to: creditor.uid,
+      amount: minAmount,
+    });
+
+    debtor.amount -= minAmount;
+    creditor.amount -= minAmount;
+
+    if (debtor.amount === 0) i++;
+    if (creditor.amount === 0) j++;
+  }
+
+  return settlements;
+}
+
+export async function recordSettlement({
+  groupId,
+  fromUid,
+  fromName,
+  toUid,
+  toName,
+  amount,
+}) {
+  return await addExpense({
+    groupId,
+    description: `Settlement: ${fromName} paid ${toName}`,
+    amount,
+    category: "settlement",
+    createdBy: fromUid,
+    split: [{ userId: toUid, amount }],
+    splitUserIds: [toUid],
+    createdAt: Timestamp.now(),
+  });
 }

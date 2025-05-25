@@ -11,6 +11,7 @@ import AddExpenseForm from "../components/AddExpenseForm";
 import BalanceSummary from "../components/BalanceSummary";
 import ExpenseList from "../components/ExpenseList";
 import { useExpenseStore } from "../stores/expenseStore";
+import SettlementList from "../components/SettlementList";
 
 const GroupDetailPage = () => {
   const { groupId } = useParams();
@@ -117,6 +118,11 @@ const GroupDetailPage = () => {
           members={members}
         />
         <BalanceSummary members={members} />
+        <SettlementList
+          members={members}
+          groupId={groupId}
+          currentUserId={user.uid}
+        />
       </div>
     </>
   );

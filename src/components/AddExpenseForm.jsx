@@ -182,10 +182,9 @@ const AddExpenseForm = ({ groupId, currentUserId, members }) => {
       {splitPreview.length > 0 && (
         <div>
           <p>
-            <p>
-              <strong>Split between {splitPreview.length} member(s):</strong>
-            </p>
+            <strong>Split between {splitPreview.length} member(s):</strong>
           </p>
+
           <ul>
             {splitPreview.map((entry) => (
               <li key={entry.userId}>
